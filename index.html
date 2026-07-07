@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amazon Seller Dashboard — Bharat Jhala</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1320; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; padding: 32px 16px; }
+
+    .db { padding: 28px; max-width: 1100px; margin: 0 auto; background: #161E2D; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.4); }
+
+    /* HEADER */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; padding-bottom: 18px; border-bottom: 0.5px solid rgba(255,255,255,0.08); }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .aws-logo { background: #FF9900; border-radius: 8px; padding: 5px 10px; font-size: 13px; font-weight: 700; color: #161E2D; letter-spacing: 0.04em; }
+    .header-titles h1 { font-size: 20px; font-weight: 500; color: #ffffff; }
+    .header-titles p { font-size: 13px; color: #8B9BB4; margin-top: 2px; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .week-badge { font-size: 12px; background: rgba(255,153,0,0.15); color: #FF9900; padding: 4px 12px; border-radius: 20px; font-weight: 500; border: 0.5px solid rgba(255,153,0,0.3); }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #1BAF7A; display: inline-block; margin-right: 4px; }
+    .live-text { font-size: 12px; color: #8B9BB4; }
+
+    /* SECTION LABELS */
+    .section-label { font-size: 22px; font-weight: 600; color: #FF9900; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    .section-label::after { content: ''; flex: 1; height: 0.5px; background: rgba(255,153,0,0.2); }
+
+    /* METRIC CARDS */
+    .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .mc { background: #1B2537; border: 0.5px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 16px 18px; position: relative; overflow: hidden; }
+    .mc::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 12px 12px 0 0; }
+    .mc.nsm::before { background: #FF9900; }
+    .mc.revenue::before { background: #1BAF7A; }
+    .mc.price::before { background: #4A90D9; }
+    .mc.inv::before { background: #E34948; }
+    .mc-label { font-size: 11px; color: #8B9BB4; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .nsm-badge { font-size: 9px; background: rgba(255,153,0,0.15); color: #FF9900; padding: 2px 6px; border-radius: 4px; font-weight: 600; letter-spacing: 0.04em; border: 0.5px solid rgba(255,153,0,0.3); }
+    .mc-value { font-size: 28px; font-weight: 500; color: #ffffff; line-height: 1; margin-bottom: 6px; }
+    .mc-delta { font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 4px; margin-bottom: 10px; }
+    .d-down { color: #E34948; }
+    .d-warn { color: #FF9900; }
+    .spark-wrap { height: 36px; }
+
+    /* CHARTS */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .cc { background: #1B2537; border: 0.5px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 18px; }
+    .cc-title { font-size: 13px; font-weight: 500; color: #ffffff; margin-bottom: 4px; }
+    .cc-sub { font-size: 11px; color: #8B9BB4; margin-bottom: 14px; }
+    .cw { position: relative; width: 100%; height: 160px; }
+    .legend { display: flex; gap: 16px; margin-bottom: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8B9BB4; }
+    .legend-line { width: 20px; height: 2px; border-radius: 2px; }
+    .legend-dash { width: 20px; height: 2px; background: repeating-linear-gradient(90deg, #E34948 0, #E34948 4px, transparent 4px, transparent 8px); }
+
+    /* MINI CHARTS */
+    .mini-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .mmc { background: #1B2537; border: 0.5px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 14px 16px; }
+    .mmc-label { font-size: 11px; color: #8B9BB4; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .mmc-value { font-size: 20px; font-weight: 500; color: #ffffff; margin-bottom: 2px; }
+    .mmc-delta { font-size: 11px; font-weight: 500; margin-bottom: 8px; }
+    .mw { position: relative; width: 100%; height: 50px; }
+
+    .divider { border: none; border-top: 0.5px solid rgba(255,255,255,0.07); margin: 24px 0 20px; }
+
+    /* ALERTS */
+    .alert { border-radius: 12px; padding: 16px 18px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 14px; border: 0.5px solid; }
+    .alert.red { background: rgba(227,73,72,0.08); border-color: rgba(227,73,72,0.25); }
+    .alert.amber { background: rgba(255,153,0,0.08); border-color: rgba(255,153,0,0.25); }
+    .alert-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+    .alert.red .alert-icon { background: rgba(227,73,72,0.15); }
+    .alert.amber .alert-icon { background: rgba(255,153,0,0.15); }
+    .alert-body { flex: 1; }
+    .alert-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .alert-title { font-size: 13px; font-weight: 600; }
+    .alert.red .alert-title { color: #E34948; }
+    .alert.amber .alert-title { color: #FF9900; }
+    .sev { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .alert.red .sev { background: rgba(227,73,72,0.15); color: #E34948; border: 0.5px solid rgba(227,73,72,0.3); }
+    .alert.amber .sev { background: rgba(255,153,0,0.15); color: #FF9900; border: 0.5px solid rgba(255,153,0,0.3); }
+    .alert-text { font-size: 13px; color: #8B9BB4; line-height: 1.6; }
+    .alert-text strong { color: #e5e7eb; }
+    .alert-action { font-size: 12px; font-weight: 600; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid rgba(255,255,255,0.06); }
+    .alert.red .alert-action { color: #E34948; }
+    .alert.amber .alert-action { color: #FF9900; }
+
+    /* FOOTER */
+    .footer { margin-top: 24px; padding-top: 16px; border-top: 0.5px solid rgba(255,255,255,0.07); display: flex; justify-content: space-between; align-items: center; }
+    .footer-left { font-size: 12px; color: #4B5563; }
+    .footer-right { font-size: 12px; color: #4B5563; }
+    .footer-right a { color: #FF9900; text-decoration: none; }
+    .footer-right a:hover { text-decoration: underline; }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .metric-grid { grid-template-columns: repeat(2, 1fr); }
+      .charts-grid { grid-template-columns: 1fr; }
+      .mini-grid { grid-template-columns: repeat(2, 1fr); }
+      .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .section-label { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="db">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="aws-logo">AWS</div>
+      <div class="header-titles">
+        <h1>Amazon Seller Dashboard</h1>
+        <p>Performance overview · Week of Jul 1 – Jul 6, 2026</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="week-badge">Weekly View</span>
+      <span><span class="status-dot"></span><span class="live-text">Live data</span></span>
+    </div>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div class="section-label">How am I doing right now?</div>
+  <div class="metric-grid">
+    <div class="mc nsm">
+      <div class="mc-label"><span>Buy box win rate</span><span class="nsm-badge">NSM</span></div>
+      <div class="mc-value">43%</div>
+      <div class="mc-delta d-down">↓ 38 pts vs last week</div>
+      <div class="spark-wrap"><canvas id="as1"></canvas></div>
+    </div>
+    <div class="mc revenue">
+      <div class="mc-label">Sales & revenue</div>
+      <div class="mc-value">$12.4K</div>
+      <div class="mc-delta d-down">↓ 22% vs last week</div>
+      <div class="spark-wrap"><canvas id="as2"></canvas></div>
+    </div>
+    <div class="mc price">
+      <div class="mc-label">Competitive price gap</div>
+      <div class="mc-value">+$4.20</div>
+      <div class="mc-delta d-warn">⚠ You are priced higher</div>
+      <div class="spark-wrap"><canvas id="as3"></canvas></div>
+    </div>
+    <div class="mc inv">
+      <div class="mc-label">Inventory availability</div>
+      <div class="mc-value">2 wks</div>
+      <div class="mc-delta d-down">↓ Critical — reorder now</div>
+      <div class="spark-wrap"><canvas id="as4"></canvas></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SECTION 2 -->
+  <div class="section-label">Why am I doing that?</div>
+  <div class="charts-grid">
+    <div class="cc">
+      <div class="cc-title">Buy box win rate — 8-week trend</div>
+      <div class="cc-sub">Sudden cliff in W8 signals a pricing or eligibility issue</div>
+      <div class="cw"><canvas id="abb"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cc-title">Your price vs. buy box winner</div>
+      <div class="cc-sub">Competitor undercut your price from W6 — gap widening every week</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-line" style="background:#FF9900"></div> Your price</div>
+        <div class="legend-item"><div class="legend-dash"></div> Buy box winner</div>
+      </div>
+      <div class="cw"><canvas id="apc"></canvas></div>
+    </div>
+  </div>
+  <div class="mini-grid">
+    <div class="mmc">
+      <div class="mmc-label">Search rank & visibility</div>
+      <div class="mmc-value">#4</div>
+      <div class="mmc-delta d-down">↓ from #2 last week</div>
+      <div class="mw"><canvas id="ark"></canvas></div>
+    </div>
+    <div class="mmc">
+      <div class="mmc-label">View-to-order conversion</div>
+      <div class="mmc-value">6.1%</div>
+      <div class="mmc-delta d-down">↓ from 12.4% last week</div>
+      <div class="mw"><canvas id="acv"></canvas></div>
+    </div>
+    <div class="mmc">
+      <div class="mmc-label">Returns rate</div>
+      <div class="mmc-value">4.2%</div>
+      <div class="mmc-delta d-warn">↑ from 2.1% — watch closely</div>
+      <div class="mw"><canvas id="art"></canvas></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SECTION 3 -->
+  <div class="section-label">What should I do about it?</div>
+  <div class="alert red">
+    <div class="alert-icon">🏷</div>
+    <div class="alert-body">
+      <div class="alert-header"><span class="alert-title">Pricing Alert</span><span class="sev">Urgent</span></div>
+      <div class="alert-text">Your price on <strong>Product X</strong> is <strong>$4.20 higher</strong> than the current buy box winner. You lost 38 points of buy box share this week — costing an estimated <strong>$5,800 in revenue</strong>.</div>
+      <div class="alert-action">→ Drop to $23.99 to reclaim the buy box immediately.</div>
+    </div>
+  </div>
+  <div class="alert red">
+    <div class="alert-icon">📦</div>
+    <div class="alert-body">
+      <div class="alert-header"><span class="alert-title">Inventory Alert</span><span class="sev">Urgent</span></div>
+      <div class="alert-text"><strong>Product X</strong> has <strong>100 units left</strong>. At your current sell rate of <strong>50 units/week</strong>, you have 2 weeks of stock remaining. A stockout will cause Amazon to demote your listing and suppress your search rank for weeks.</div>
+      <div class="alert-action">→ Reorder at least 100 units now to protect your search ranking.</div>
+    </div>
+  </div>
+  <div class="alert amber">
+    <div class="alert-icon">📉</div>
+    <div class="alert-body">
+      <div class="alert-header"><span class="alert-title">Conversion Alert</span><span class="sev">Watch Closely</span></div>
+      <div class="alert-text">Your conversion rate dropped from <strong>12.4% to 6.1%</strong> this week — half your usual buyers are landing on your listing and leaving without purchasing. A recent <strong>2-star review</strong> is likely hurting trust.</div>
+      <div class="alert-action">→ Update your main product image, review pricing vs. similar listings, and respond to the negative review today.</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-left">Amazon Seller Dashboard · Product Analytics Prototype · 2026</div>
+    <div class="footer-right"><a href="https://github.com/BharatJhala" target="_blank">github.com/BharatJhala</a></div>
+  </div>
+
+</div>
+
+<script>
+const W = ['W1','W2','W3','W4','W5','W6','W7','W8'];
+
+function aSpark(id, data, color) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'line',
+    data: { labels: W, datasets: [{ data, borderColor: color, borderWidth: 2, pointRadius: 0, fill: { target: 'origin', above: color + '18' }, tension: 0.4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } }, animation: { duration: 800 } }
+  });
+}
+aSpark('as1', [81,79,80,82,78,81,81,43], '#FF9900');
+aSpark('as2', [18.2,17.8,18.5,19.1,17.9,18.4,15.9,12.4], '#1BAF7A');
+aSpark('as3', [0.5,0.8,1.1,0.9,1.4,2.1,3.3,4.2], '#4A90D9');
+aSpark('as4', [9,8,7,7,6,5,3,2], '#E34948');
+
+new Chart(document.getElementById('abb'), {
+  type: 'line',
+  data: {
+    labels: W,
+    datasets: [{
+      label: 'Buy box win rate %',
+      data: [81,79,80,82,78,81,81,43],
+      borderColor: '#FF9900', backgroundColor: '#FF990018', borderWidth: 2.5,
+      pointRadius: [3,3,3,3,3,3,3,7],
+      pointBackgroundColor: ['#FF9900','#FF9900','#FF9900','#FF9900','#FF9900','#FF9900','#FF9900','#E34948'],
+      fill: true, tension: 0.4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1B2537', titleColor: '#fff', bodyColor: '#8B9BB4', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, callbacks: { label: c => ' ' + c.parsed.y + '%' } } },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#8B9BB4' } },
+      y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 11 }, color: '#8B9BB4', callback: v => v + '%' } }
+    }
+  }
+});
+
+new Chart(document.getElementById('apc'), {
+  type: 'line',
+  data: {
+    labels: W,
+    datasets: [
+      { label: 'Your price', data: [28.19,28.19,28.19,28.19,28.19,28.19,28.19,28.19], borderColor: '#FF9900', borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: '#FF9900', tension: 0.4, fill: false },
+      { label: 'Buy box winner', data: [27.69,27.39,27.09,27.29,26.99,26.09,24.89,23.99], borderColor: '#E34948', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#E34948', borderDash: [5,3], tension: 0.4, fill: false }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1B2537', titleColor: '#fff', bodyColor: '#8B9BB4', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, callbacks: { label: c => ' ' + c.dataset.label + ': $' + c.parsed.y.toFixed(2) } } },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#8B9BB4' } },
+      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 11 }, color: '#8B9BB4', callback: v => '$' + v.toFixed(0) } }
+    }
+  }
+});
+
+function aMini(id, data, color, rev) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: { labels: W, datasets: [{ data, backgroundColor: data.map((v,i) => i === 7 ? color : color + '44'), borderRadius: 3, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false, reverse: rev || false } }, animation: { duration: 600 } }
+  });
+}
+aMini('ark', [1,1,2,2,2,3,3,4], '#4A90D9', true);
+aMini('acv', [13,12,13,12,12,11,12,6.1], '#1BAF7A', false);
+aMini('art', [1.8,2,1.9,2.1,2.2,2.4,2.8,4.2], '#FF9900', false);
+</script>
+</body>
+</html>
