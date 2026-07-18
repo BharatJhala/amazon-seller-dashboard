@@ -2,6 +2,7 @@
 ### A Product Analytics Prototype by Bharat Jhala
 
 > **Live Demo →** [bharatjhala.github.io/amazon-seller-dashboard](https://bharatjhala.github.io/amazon-seller-dashboard)
+> 
 > **Medium Article →** Your Dashboard Is Lying to You
 ---
 
