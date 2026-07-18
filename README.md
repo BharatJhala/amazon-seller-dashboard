@@ -3,7 +3,7 @@
 
 > **Live Demo →** [bharatjhala.github.io/amazon-seller-dashboard](https://bharatjhala.github.io/amazon-seller-dashboard)
 > 
-> **Medium Article →** Your Dashboard Is Lying to You
+> **Medium Article →** [Your Dashboard Is Lying to You](https://medium.com/@reachbharatsinh/your-dashboard-is-lying-to-you-4de16ae2207c?sharedUserId=reachbharatsinh)
 ---
 
 ## Overview
